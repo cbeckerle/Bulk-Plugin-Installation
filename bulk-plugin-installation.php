@@ -2,9 +2,9 @@
 /*
 	Plugin Name: Bulk Plugin Installation
 	Description: Allows you to install one or more plugins simply by typing their names or download URLs in a textarea.
-	Version: 2.0
+	Version: 2.0.1
 	Author: Bee Web Hosting
-	Author URI: http://www.beewh.com
+	Author URI: https://www.beewh.com
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,7 +20,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 * 
 		 * @var string 
 		 */
-		var $version = '2.0';
+		var $version = '2.0.1';
 
 		/**
 		 * BulkPluginInstallation constructor.
@@ -97,7 +97,8 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 				if ( is_array( $_REQUEST['pluginurls'] ) ) {
 					$urls = $_REQUEST['pluginurls'];
 				} else {
-					$urls = explode( "\n", sanitize_textarea_field( $_REQUEST['pluginurls'] ) );
+					$urls = explode( "
+", sanitize_textarea_field( $_REQUEST['pluginurls'] ) );
 				}
 			} else {
 				wp_die( __( 'No data supplied.', 'bulk-plugin-installation' ) );
@@ -110,13 +111,18 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
 			foreach ( $urls as $url ) {
-				// Actualizado para soportar https://
 				if ( ! preg_match( '/https?:\/\//i', $url, $match ) ) {
+						// Es un slug o nombre simple (ej: BellePopups)
 						$plugin_name = $url;
-				} else if ( preg_match( '/downloads\.wordpress\.org\/plugin\/([^\.]+)(.*)\.zip/i', $url, $match ) || preg_match( '/wordpress\.org\/(extend\/)?plugins\/([^\/]*)\/?/i', $url, $match ) ) {
-						// Se ajustó la expresión regular para contemplar las URLs modernas del repositorio
-						$plugin_name = stripslashes( end( $match ) ); 
+				} else if ( preg_match( '/downloads\.wordpress\.org\/plugin\/([^\.]+)/i', $url, $match ) ) {
+						// Es un ZIP del repositorio. Extrae el nombre ignorando la versión
+						// Ej: performance-lab de performance-lab.4.2.0.zip
+						$plugin_name = stripslashes( $match[1] );
+				} else if ( preg_match( '/wordpress\.org\/(extend\/)?plugins\/([^\/]+)/i', $url, $match ) ) {
+						// Es la URL de la página del plugin en WP.org
+						$plugin_name = stripslashes( $match[2] ); 
 				} else {
+						// Es un ZIP externo o enlace directo
 						$plugin_name = false;
 				}
 
@@ -131,7 +137,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 						echo '<h2>' . sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), esc_attr( $url ) ) . '</h2>';
 
 						if ( $code == 'plugins_api_failed' ) {
-							echo '<p style="color:red;">' . __( 'Couldn\'t install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
+							echo '<p style="color:red;">' . __( 'Couldn't install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
 						} else {
 							echo '<p style="color:red;">' . $message . '</p>';
 						}
