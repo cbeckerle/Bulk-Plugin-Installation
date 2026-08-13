@@ -55,15 +55,17 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		function render_admin_page() {
 			echo '<div class="wrap">';
 			
-			// Validamos que se haya enviado el formulario y verificamos el nonce aquí mismo
+			// Validamos el nonce aquí, sanitizamos la entrada y se la enviamos directamente a bpi()
 			if ( isset( $_POST['pluginurls'], $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'plugin-bpi' ) ) {
-				$this->bpi();
+				$raw_urls = sanitize_textarea_field( wp_unslash( $_POST['pluginurls'] ) );
+				$this->bpi( $raw_urls );
 			} else {
 				$this->install_plugins_dashboard();
 			}
 
 			echo '</div>';
 		}
+
 		/**
 		 * Form.
 		 */
@@ -82,16 +84,18 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 
 		/**
 		 * Process the form POST.
+		 * 
+		 * @param string $raw_urls
 		 */
-		function bpi() {
+		function bpi( $raw_urls = '' ) {
 			if ( ! is_user_logged_in() ) {
 				wp_die( esc_html__( 'You are not logged in.', 'bulk-plugin-installation' ) );
 			} else if ( ! current_user_can( 'install_plugins' ) ) {
 				wp_die( esc_html__( 'You do not have the necessary administrative rights to be able to install plugins.', 'bulk-plugin-installation' ) );
 			}
 
-			if ( ! empty( $_POST['pluginurls'] ) ) {
-				$raw_urls = sanitize_textarea_field( wp_unslash( $_POST['pluginurls'] ) );
+			// Ahora usamos la variable que nos pasaron, en lugar de $_POST
+			if ( ! empty( $raw_urls ) ) {
 				$urls = explode( "\n", $raw_urls );
 			} else {
 				wp_die( esc_html__( 'No data supplied.', 'bulk-plugin-installation' ) );
