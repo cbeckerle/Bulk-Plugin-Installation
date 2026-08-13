@@ -4,7 +4,7 @@ Donate link: https://www.beewh.com
 Tags: admin, plugin, plugins, automation, install, installation, files, upload, multiple, enhanced, improved, bulk
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 2.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,6 +46,10 @@ Nothing yet.
 Nothing yet.
 
 == Changelog ==
+
+= 2.0.1 =
+* Fixed a bug where ZIP file URLs from the WordPress repository were not parsed correctly.
+* Fixed a PHP syntax error caused by an unescaped apostrophe in error messages.
 
 = 2.0 =
 * Rewritten to be fully compatible with PHP 8+ and WordPress 7.

@@ -11,7 +11,7 @@ Maintained and updated by **[Bee Web Hosting](https://www.beewh.com)**.
 ## ✨ Features
 * **Bulk Installation**: Install multiple plugins at once, saving you time.
 * **Flexible Input**: Accepts plugin slugs, WordPress.org repository URLs, or direct ZIP file URLs.
-* **Modernized**: Fully rewritten (v2.0) to be compatible with PHP 8+ and WordPress 6.x/7.x.
+* **Modernized**: Fully rewritten (v2.0+) to be compatible with PHP 8+ and WordPress 6.x/7.x.
 * **HTTPS Support**: Fully supports modern secure URLs.
 
 ## 🚀 Installation
@@ -32,12 +32,16 @@ The installation form accepts any of these formats:
 ```text
 woocommerce
 contact-form-7
-https://wordpress.org/plugins/contact-form-7/
-https://downloads.wordpress.org/plugin/contact-form-7.zip
+[https://wordpress.org/plugins/contact-form-7/](https://wordpress.org/plugins/contact-form-7/)
+[https://downloads.wordpress.org/plugin/contact-form-7.zip](https://downloads.wordpress.org/plugin/contact-form-7.zip)
 ```
 *Note: Plugins don't need to be hosted at wordpress.org. As long as you use the direct download URL (ZIP), third-party plugins will install without a problem.*
 
 ## 🔄 Changelog
+
+### 2.0.1
+* Fixed a bug where ZIP file URLs from the WordPress repository were not parsed correctly.
+* Fixed a PHP syntax error caused by an unescaped apostrophe in error messages.
 
 ### 2.0
 * Rewritten to be fully compatible with PHP 8+ and WordPress 7.
