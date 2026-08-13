@@ -55,7 +55,8 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		function render_admin_page() {
 			echo '<div class="wrap">';
 			
-			if ( isset( $_POST['pluginurls'] ) ) {
+			// Validamos que se haya enviado el formulario y verificamos el nonce aquí mismo
+			if ( isset( $_POST['pluginurls'], $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'plugin-bpi' ) ) {
 				$this->bpi();
 			} else {
 				$this->install_plugins_dashboard();
@@ -63,7 +64,6 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 
 			echo '</div>';
 		}
-
 		/**
 		 * Form.
 		 */
@@ -88,11 +88,6 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 				wp_die( esc_html__( 'You are not logged in.', 'bulk-plugin-installation' ) );
 			} else if ( ! current_user_can( 'install_plugins' ) ) {
 				wp_die( esc_html__( 'You do not have the necessary administrative rights to be able to install plugins.', 'bulk-plugin-installation' ) );
-			}
-
-			// Nonce verification
-			if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'plugin-bpi' ) ) {
-				wp_die( esc_html__( 'Security check failed.', 'bulk-plugin-installation' ) );
 			}
 
 			if ( ! empty( $_POST['pluginurls'] ) ) {
