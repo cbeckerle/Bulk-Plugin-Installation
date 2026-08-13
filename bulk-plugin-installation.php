@@ -5,6 +5,9 @@
 	Version: 2.0.1
 	Author: Bee Web Hosting
 	Author URI: https://www.beewh.com
+	Text Domain: bulk-plugin-installation
+	License: GPLv2 or later
+	License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,14 +32,8 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 * @return void
 		 */
 		function __construct() {
-			// Cargar traducciones
-			add_action( 'init', array( $this, 'load_textdomain' ) );
-			// Crear un submenú en lugar de los tabs obsoletos
+			// Crear un submenú
 			add_action( 'admin_menu', array( $this, 'add_plugin_menu' ) );
-		}
-
-		function load_textdomain() {
-			load_plugin_textdomain( 'bulk-plugin-installation', false, basename( dirname( __FILE__ ) ) . '/languages' );
 		}
 
 		/**
@@ -44,8 +41,8 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 */
 		function add_plugin_menu() {
 			add_plugins_page(
-				__( 'Bulk Plugin Installation', 'bulk-plugin-installation' ),
-				__( 'Bulk Install', 'bulk-plugin-installation' ),
+				esc_html__( 'Bulk Plugin Installation', 'bulk-plugin-installation' ),
+				esc_html__( 'Bulk Install', 'bulk-plugin-installation' ),
 				'install_plugins',
 				'bulk-plugin-installation',
 				array( $this, 'render_admin_page' )
@@ -58,7 +55,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		function render_admin_page() {
 			echo '<div class="wrap">';
 			
-			if ( isset( $_POST['pluginurls'] ) && isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'plugin-bpi' ) ) {
+			if ( isset( $_POST['pluginurls'] ) ) {
 				$this->bpi();
 			} else {
 				$this->install_plugins_dashboard();
@@ -72,12 +69,12 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 */
 		function install_plugins_dashboard() {
 			?>
-			<h2><?php _e( 'Install plugins from URL/name', 'bulk-plugin-installation' ); ?></h2>
-			<p><?php _e( 'Type the plugin names, the WordPress plugin page URLs, or the direct URLs to the zip files, one on each line.', 'bulk-plugin-installation' ); ?></p>
+			<h2><?php esc_html_e( 'Install plugins from URL/name', 'bulk-plugin-installation' ); ?></h2>
+			<p><?php esc_html_e( 'Type the plugin names, the WordPress plugin page URLs, or the direct URLs to the zip files, one on each line.', 'bulk-plugin-installation' ); ?></p>
 			<form method="post" action="">
 				<?php wp_nonce_field( 'plugin-bpi' ) ?>
 				<textarea name="pluginurls" rows="10" cols="70" class="large-text code"></textarea><br /><br />
-				<input type="submit" class="button button-primary" value="<?php _e( 'Install now', 'bulk-plugin-installation' ); ?>" />
+				<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Install now', 'bulk-plugin-installation' ); ?>" />
 			</form>
 			<br />
 			<?php
@@ -88,19 +85,21 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 */
 		function bpi() {
 			if ( ! is_user_logged_in() ) {
-				wp_die( __( 'You are not logged in.', 'bulk-plugin-installation' ) );
+				wp_die( esc_html__( 'You are not logged in.', 'bulk-plugin-installation' ) );
 			} else if ( ! current_user_can( 'install_plugins' ) ) {
-				wp_die( __( 'You do not have the necessary administrative rights to be able to install plugins.', 'bulk-plugin-installation' ) );
+				wp_die( esc_html__( 'You do not have the necessary administrative rights to be able to install plugins.', 'bulk-plugin-installation' ) );
 			}
 
-			if ( ! empty( $_REQUEST['pluginurls'] ) ) {
-				if ( is_array( $_REQUEST['pluginurls'] ) ) {
-					$urls = $_REQUEST['pluginurls'];
-				} else {
-					$urls = explode( "\n", sanitize_textarea_field( $_REQUEST['pluginurls'] ) );
-				}
+			// Nonce verification
+			if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'plugin-bpi' ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'bulk-plugin-installation' ) );
+			}
+
+			if ( ! empty( $_POST['pluginurls'] ) ) {
+				$raw_urls = sanitize_textarea_field( wp_unslash( $_POST['pluginurls'] ) );
+				$urls = explode( "\n", $raw_urls );
 			} else {
-				wp_die( __( 'No data supplied.', 'bulk-plugin-installation' ) );
+				wp_die( esc_html__( 'No data supplied.', 'bulk-plugin-installation' ) );
 			}
 
 			$urls = array_unique( array_filter( array_map( 'trim', $urls ) ) );
@@ -111,17 +110,12 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 
 			foreach ( $urls as $url ) {
 				if ( ! preg_match( '/https?:\/\//i', $url, $match ) ) {
-						// Es un slug o nombre simple (ej: BellePopups)
 						$plugin_name = $url;
 				} else if ( preg_match( '/downloads\.wordpress\.org\/plugin\/([^\.]+)/i', $url, $match ) ) {
-						// Es un ZIP del repositorio. Extrae el nombre ignorando la versión
-						// Ej: performance-lab de performance-lab.4.2.0.zip
 						$plugin_name = stripslashes( $match[1] );
 				} else if ( preg_match( '/wordpress\.org\/(extend\/)?plugins\/([^\/]+)/i', $url, $match ) ) {
-						// Es la URL de la página del plugin en WP.org
 						$plugin_name = stripslashes( $match[2] ); 
 				} else {
-						// Es un ZIP externo o enlace directo
 						$plugin_name = false;
 				}
 
@@ -133,30 +127,33 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 						$code = $plugin->get_error_code();
 						$message = $plugin->get_error_message();
 
-						echo '<h2>' . sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), esc_attr( $url ) ) . '</h2>';
+						/* translators: %s: Plugin URL or name */
+						echo '<h2>' . esc_html( sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), $url ) ) . '</h2>';
 
 						if ( $code == 'plugins_api_failed' ) {
-							echo '<p style="color:red;">' . __( 'Couldn\'t install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
+							echo '<p style="color:red;">' . esc_html__( 'Couldn\'t install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
 						} else {
-							echo '<p style="color:red;">' . $message . '</p>';
+							echo '<p style="color:red;">' . esc_html( $message ) . '</p>';
 						}
 					} else {
 						$correct++;
-						echo '<h2>', sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation'), $plugin->name . ' ' . $plugin->version ), '</h2>';
+						/* translators: %s: Plugin name and version */
+						echo '<h2>' . esc_html( sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation'), $plugin->name . ' ' . $plugin->version ) ) . '</h2>';
 						$this->do_plugin_install( $plugin->download_link );
 					}
 				} else {
 					$correct++;
-					echo '<h2>' . sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), esc_attr( $url ) ) . '</h2>';
+					/* translators: %s: Plugin URL */
+					echo '<h2>' . esc_html( sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), $url ) ) . '</h2>';
 					$this->do_external_plugin_install( $url );
 				}
 			}
 
 			if ( ! $correct && ! $errors ) {
-					echo '<p>' . __( 'No valid data supplied.', 'bulk-plugin-installation' ) . '</p>';
+					echo '<p>' . esc_html__( 'No valid data supplied.', 'bulk-plugin-installation' ) . '</p>';
 			}
 			
-			echo '<p><a href="' . admin_url('plugins.php?page=bulk-plugin-installation') . '" class="button">' . __('&laquo; Return to Bulk Installer', 'bulk-plugin-installation') . '</a></p>';
+			echo '<p><a href="' . esc_url( admin_url('plugins.php?page=bulk-plugin-installation') ) . '" class="button">' . esc_html__('&laquo; Return to Bulk Installer', 'bulk-plugin-installation') . '</a></p>';
 		}
 
 		/**
@@ -209,7 +206,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 		 */
 		function do_external_plugin_install( $download_url ) {
 			if ( empty( $download_url ) ) {
-				echo '<p>' . __( 'No plugin specified', 'bulk-plugin-installation' ) . '</p>';
+				echo '<p>' . esc_html__( 'No plugin specified', 'bulk-plugin-installation' ) . '</p>';
 				return;
 			}
 
@@ -217,9 +214,10 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 			$result = $upgrader->install( $download_url );
 
 			if ( is_wp_error( $result ) ) {
-				echo '<p style="color:red;">' . __( 'Installation failed', 'bulk-plugin-installation' ) . '</p>';
+				echo '<p style="color:red;">' . esc_html__( 'Installation failed', 'bulk-plugin-installation' ) . '</p>';
 			} else {
-				echo '<p style="color:green;">' . sprintf( __( 'Successfully installed the plugin <strong>%s </strong>.', 'bulk-plugin-installation' ), $download_url ) . '</p>';
+				/* translators: %s: Plugin download URL */
+				echo '<p style="color:green;">' . wp_kses_post( sprintf( __( 'Successfully installed the plugin <strong>%s</strong>.', 'bulk-plugin-installation' ), esc_url( $download_url ) ) ) . '</p>';
 			}
 		}
 
