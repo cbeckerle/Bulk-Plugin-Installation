@@ -1,5 +1,5 @@
 === Bulk Plugin Installation ===
-Contributors: beewh
+Contributors: estudiobee
 Donate link: https://www.beewh.com
 Tags: admin, automation, install, bulk, upload
 Requires at least: 5.8
