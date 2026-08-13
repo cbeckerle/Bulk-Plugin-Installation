@@ -97,8 +97,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 				if ( is_array( $_REQUEST['pluginurls'] ) ) {
 					$urls = $_REQUEST['pluginurls'];
 				} else {
-					$urls = explode( "
-", sanitize_textarea_field( $_REQUEST['pluginurls'] ) );
+					$urls = explode( "\n", sanitize_textarea_field( $_REQUEST['pluginurls'] ) );
 				}
 			} else {
 				wp_die( __( 'No data supplied.', 'bulk-plugin-installation' ) );
@@ -137,7 +136,7 @@ if ( ! class_exists( 'BulkPluginInstallation' ) ) {
 						echo '<h2>' . sprintf( __( 'Installing plugin: %s', 'bulk-plugin-installation' ), esc_attr( $url ) ) . '</h2>';
 
 						if ( $code == 'plugins_api_failed' ) {
-							echo '<p style="color:red;">' . __( 'Couldn't install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
+							echo '<p style="color:red;">' . __( 'Couldn\'t install plugin, perhaps you misspelled the name?', 'bulk-plugin-installation' ) . '</p>';
 						} else {
 							echo '<p style="color:red;">' . $message . '</p>';
 						}
